@@ -3,12 +3,26 @@ from posts.models import Post
 from posts.api.serializers import *
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
 from posts.api.permissions import IsOwnerOrReadOnly
-
-
+from django.db.models import Q
+from rest_framework import filters
+from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
 class PostListAPIView(generics.ListAPIView):
-    queryset = Post.objects.all()
-    serializer_class = PostListSerializer
 
+    serializer_class = PostListSerializer
+    filter_backends = (filters.SearchFilter,filters.OrderingFilter)
+    search_fields = ['username', 'title','content','slug','user__first_name']
+    pagination_class = LimitOffsetPagination
+    def get_queryset(self, *args, **kwargs):
+        queryset_list = Post.objects.all()
+        query = self.request.GET.get("q")
+        if query:
+            queryset_list = queryset_list.filter(
+                Q(title__icontains=query) |
+                Q(content__icontains=query) |
+                Q(user__first_name__icontains=query) |
+                Q(user__last_name__icontains=query)
+            ).distinct()
+        return queryset_list
 
 class PostDetailAPIView(generics.RetrieveAPIView):
     queryset = Post.objects.all()
