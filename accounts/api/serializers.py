@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import HyperlinkedIdentityField, SerializerMethodField
-#from django.db.models.fields import EmailField
+
 
 
 User = get_user_model()
@@ -53,3 +53,20 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return validated_data
 
 
+class UserLoginSerializer(serializers.ModelSerializer):
+    token = serializers.CharField(allow_blank = True, read_only = True)
+    email = serializers.EmailField(label= 'Email Address', required = False, allow_blank=True)
+    username = serializers.CharField(required = False, allow_blank=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email','token','password']
+
+    def validate(self, data):
+        email = data.get('email')
+        username = data.get('username')
+        password = data.get('password')
+
+        if not email and not username:
+            raise serializers.ValidationError("Please provide any one username or email")
+        return data
