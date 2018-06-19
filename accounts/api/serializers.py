@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import HyperlinkedIdentityField, SerializerMethodField
-
+from django.db.models import Q
 
 
 User = get_user_model()
@@ -63,10 +63,19 @@ class UserLoginSerializer(serializers.ModelSerializer):
         fields = ['username', 'email','token','password']
 
     def validate(self, data):
-        email = data.get('email')
-        username = data.get('username')
-        password = data.get('password')
+        user_obj = None
+        email = data.get('email', None)
+        username = data.get('username', None)
+        password = data.get('password', None)
 
         if not email and not username:
             raise serializers.ValidationError("Please provide any one username or email")
+        user = User.objects.filter(Q(username = username) | Q(email = email)).distinct()
+        if user.exists() and user.count()==1:
+            user_obj = user.first()
+        else:
+            raise serializers.ValidationError("This user/email is not valid")
+
+        if not user_obj.check_password(password):
+            raise serializers.ValidationError("Password do not match.")
         return data
