@@ -15,6 +15,7 @@ class PostListAPIView(generics.ListAPIView):
     filter_backends = (filters.SearchFilter,filters.OrderingFilter)
     search_fields = ['username', 'title','content','slug','user__first_name']
     pagination_class = PostPageNumberPagination
+    permission_classes = [AllowAny]
 
     def get_queryset(self, *args, **kwargs):
         queryset_list = Post.objects.all()
@@ -34,19 +35,25 @@ class PostDetailAPIView(generics.RetrieveAPIView):
     serializer_class = PostDetailSerializer
     lookup_field = 'slug'
     #lookup_url_kwarg = 'abc'
+    permission_classes = [AllowAny]
 
 ''' Delete indivisual post from post list '''
 class PostDeleteAPIView(generics.DestroyAPIView):
     queryset = Post.objects.all()
     serializer_class = PostDetailSerializer
     lookup_field = 'slug'
-    permission_classes = (IsAuthenticated,)
+    '''
+    below permission comment because we have set default permission class in setting as IsAuthenticated
+    so we dont required any more permission class here 
+    
+    '''
+    #permission_classes = (IsAuthenticated,)
 
 ''' create new post list by authenticated user '''
 class PostCreateAPIView(generics.ListCreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostListSerializer
-    permission_classes = (IsAuthenticated,)
+    #permission_classes = (IsAuthenticated,)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -56,7 +63,7 @@ class PostUpdateAPIView(generics.RetrieveUpdateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostDetailSerializer
     lookup_field = 'slug'
-    permission_classes = (IsAuthenticated,IsOwnerOrReadOnly)
+    permission_classes = [IsOwnerOrReadOnly]
 
     def perform_update(self, serializer):
         serializer.save(user=self.request.user)

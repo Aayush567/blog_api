@@ -71,6 +71,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
         if not email and not username:
             raise serializers.ValidationError("Please provide any one username or email")
         user = User.objects.filter(Q(username = username) | Q(email = email)).distinct()
+        user = user.exclude(email__isnull=True).exclude(email__iexact='')
         if user.exists() and user.count()==1:
             user_obj = user.first()
         else:
